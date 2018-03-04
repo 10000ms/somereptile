@@ -11,12 +11,13 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.parse
 import re
+import xlsxwriter
 
 
 # 设置要爬取的贴吧名
-tieba_name = '崩坏3'
+tieba_name = '永远的7日之都'
 # 设置要爬取的页面数量
-deep = 3
+deep = 2
 
 
 def get_html(url):
@@ -55,8 +56,8 @@ def get_content(url):
             # 开始筛选信息，并保存到字典中
             comment['title'] = li.find(
                 'a', attrs={'class': 'j_th_tit '}).text.strip()
-            # comment['link'] = "http://tieba.baidu.com/" + \
-            #     li.find('a', attrs={'class': 'j_th_tit '})['href']
+            comment['link'] = "http://tieba.baidu.com/" + \
+                li.find('a', attrs={'class': 'j_th_tit '})['href']
             # comment['name'] = li.find(
             #     'span', attrs={'class': 'tb_icon_author '}).text.strip()
             comment['time'] = li.find(
@@ -86,6 +87,40 @@ def Out2File(dict):
         print('当前页面爬取完成')
 
 
+def Out2excel(url_list):
+    '''
+        将爬取到的文件写入到本地
+        保存到当前目录的 result.xlsx文件中。
+
+    '''
+    workbook = xlsxwriter.Workbook('result.xlsx')
+    #     添加worksheet,也可以指定名字
+    worksheet = workbook.add_worksheet('DATA')
+    worksheet.write('A1', '标题')
+    worksheet.write('B1', '发帖时间')
+    worksheet.write('C1', '回复数量')
+
+    page = 1
+    num = 1
+    for url in url_list:
+        content = get_content(url)
+        for comment in content:
+            worksheet.write(num, 0, comment['title'])
+            worksheet.write(num, 1, get_time(comment['link']))
+            worksheet.write(num, 2, comment['replyNum'])
+            num = num + 1
+        print(page,'页面爬取完成')
+        page = page + 1
+
+
+# 获取准确时间
+def get_time(detail_url):
+    content = BeautifulSoup(get_html(detail_url), 'lxml')
+    regex = re.compile('\d{4}-\d{2}-\d{2} \d{2}:\d{2}')
+    page_time = re.search(regex , str(content)).group()
+    return page_time
+
+
 def main(base_url, deep):
     url_list = []
     # 将所有需要爬去的url存入列表
@@ -94,9 +129,12 @@ def main(base_url, deep):
     print('所有的网页已经下载到本地！ 开始筛选信息。。。。')
 
     #循环写入所有的数据
-    for url in url_list:
-        content = get_content(url)
-        Out2File(content)
+    # for url in url_list:
+    #     content = get_content(url)
+    #     Out2File(content)
+
+    Out2excel(url_list)
+
     print('所有的信息都已经保存完毕！')
 
 
