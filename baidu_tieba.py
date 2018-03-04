@@ -107,9 +107,10 @@ def check_url(tieba_name):
     is_target = re.search('name="description"',str(content))
     if is_target:
         print('找到'+ tieba_name +'贴吧')
+        main(test_url, deep)
     else:
         print('未找到' + tieba_name + '贴吧')
-    main(test_url, deep)
+
 
 
 if __name__ == '__main__':
